@@ -14,10 +14,10 @@ import (
 var ErrNoCity = errors.New("no city exists")
 
 type MemoryStore struct {
-	mu      sync.RWMutex
 	city    *models.City
 	events  []models.Event
 	resHist []models.ResourceSnapshot
+	mu      sync.RWMutex
 }
 
 func NewMemoryStore() *MemoryStore {

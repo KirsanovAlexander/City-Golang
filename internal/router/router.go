@@ -3,48 +3,92 @@ package router
 import (
 	"city/internal/handlers"
 	"city/internal/storage"
+	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-func SetupRouter(store *storage.MemoryStore) *gin.Engine {
-	r := gin.Default()
+func SetupRouter(store storage.Store) *chi.Mux {
+	r := chi.NewRouter()
 
+	// Middleware
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
+
+	// Swagger documentation
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+	))
+	r.Get("/swagger/doc.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		http.ServeFile(w, r, "docs/swagger.json")
+	})
+
+	// Initialize handlers
 	city := handlers.NewCityHandler(store)
 	bld := handlers.NewBuildingsHandler(store)
 	cit := handlers.NewCitizensHandler(store)
 	res := handlers.NewResourcesHandler(store)
 	sim := handlers.NewSimulationHandler(store)
 
-	r.POST("/city", city.Create)
-	r.GET("/city", city.Get)
-	r.DELETE("/city/reset", city.Reset)
-	r.PATCH("/city/settings", city.UpdateSettings)
+	// City routes
+	r.Route("/city", func(r chi.Router) {
+		r.Post("/", city.Create)
+		r.Get("/", city.Get)
+		r.Delete("/reset", city.Reset)
+		r.Patch("/settings", city.UpdateSettings)
 
-	r.POST("/city/buildings", bld.Create)
-	r.PATCH("/city/buildings/:id/upgrade", bld.Upgrade)
-	r.DELETE("/city/buildings/:id", bld.Delete)
-	r.PATCH("/city/buildings/:id/repair", bld.Repair)
-	r.GET("/city/buildings", bld.List)
-	r.GET("/city/buildings/effects", bld.Effects)
+		// Building routes
+		r.Route("/buildings", func(r chi.Router) {
+			r.Post("/", bld.Create)
+			r.Get("/", bld.List)
+			r.Get("/effects", bld.Effects)
+			r.Patch("/{id}/upgrade", bld.Upgrade)
+			r.Patch("/{id}/repair", bld.Repair)
+			r.Delete("/{id}", bld.Delete)
+		})
 
-	r.POST("/city/citizens", cit.Create)
-	r.GET("/city/citizens", cit.List)
-	r.PATCH("/city/citizens/:id/job", cit.ChangeJob)
-	r.PATCH("/city/citizens/:id/happiness", cit.ChangeHappiness)
-	r.DELETE("/city/citizens/:id", cit.Delete)
-	r.GET("/city/citizens/jobs", cit.JobsStats)
-	r.POST("/city/citizens/mass-add", cit.MassAdd)
+		// Citizen routes
+		r.Route("/citizens", func(r chi.Router) {
+			r.Post("/", cit.Create)
+			r.Get("/", cit.List)
+			r.Get("/jobs", cit.JobsStats)
+			r.Post("/mass-add", cit.MassAdd)
+			r.Patch("/{id}/job", cit.ChangeJob)
+			r.Patch("/{id}/happiness", cit.ChangeHappiness)
+			r.Delete("/{id}", cit.Delete)
+		})
 
-	r.POST("/city/trade", res.Trade)
-	r.GET("/city/resources/history", res.History)
-	r.PATCH("/city/resources/adjust", res.Adjust)
+		// Resource routes
+		r.Route("/resources", func(r chi.Router) {
+			r.Get("/history", res.History)
+			r.Patch("/adjust", res.Adjust)
+		})
 
-	r.POST("/city/tick", sim.Tick)
-	r.POST("/city/events/random", sim.RandomEvent)
-	r.POST("/city/events/custom", sim.CustomEvent)
-	r.GET("/city/events/history", sim.EventsHistory)
-	r.GET("/city/stats", sim.Stats)
+		// Trade route
+		r.Post("/trade", res.Trade)
+
+		// Simulation routes
+		r.Route("/events", func(r chi.Router) {
+			r.Get("/history", sim.EventsHistory)
+			r.Post("/random", sim.RandomEvent)
+			r.Post("/custom", sim.CustomEvent)
+		})
+
+		r.Post("/tick", sim.Tick)
+		r.Get("/stats", sim.Stats)
+	})
 
 	return r
 }

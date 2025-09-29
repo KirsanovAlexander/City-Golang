@@ -1,87 +1,156 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"city/internal/models"
+	"city/internal/services"
 	"city/internal/storage"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 )
 
-type BuildingsHandler struct{ store *storage.MemoryStore }
-
-func NewBuildingsHandler(s *storage.MemoryStore) *BuildingsHandler {
-	return &BuildingsHandler{store: s}
+type BuildingsHandler struct {
+	service *services.BuildingsService
 }
 
-func (h *BuildingsHandler) Create(c *gin.Context) {
+func NewBuildingsHandler(store storage.Store) *BuildingsHandler {
+	return &BuildingsHandler{
+		service: services.NewBuildingsService(store),
+	}
+}
+
+// Create godoc
+// @Summary Create a new building
+// @Description Create a new building of specified type
+// @Tags buildings
+// @Accept json
+// @Produce json
+// @Param request body models.BuildRequest true "Building creation request"
+// @Success 201 {object} models.Building
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 404 {object} models.ErrorResponse
+// @Router /city/buildings [post]
+func (h *BuildingsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req models.BuildRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	b, err := h.store.AddBuilding(req.Type)
+
+	building, err := h.service.CreateBuilding(req)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	c.JSON(http.StatusCreated, b)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(building)
 }
 
-func (h *BuildingsHandler) Upgrade(c *gin.Context) {
-	id := c.Param("id")
-	b, err := h.store.UpgradeBuilding(id)
+// Upgrade godoc
+// @Summary Upgrade a building
+// @Description Upgrade a building by ID to next level
+// @Tags buildings
+// @Produce json
+// @Param id path string true "Building ID"
+// @Success 200 {object} models.Building
+// @Failure 404 {object} models.ErrorResponse
+// @Router /city/buildings/{id}/upgrade [patch]
+func (h *BuildingsHandler) Upgrade(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	building, err := h.service.UpgradeBuilding(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	c.JSON(http.StatusOK, b)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(building)
 }
 
-func (h *BuildingsHandler) Repair(c *gin.Context) {
-	id := c.Param("id")
+// Repair godoc
+// @Summary Repair a building
+// @Description Repair a building by ID with specified amount
+// @Tags buildings
+// @Accept json
+// @Produce json
+// @Param id path string true "Building ID"
+// @Param request body models.RepairRequest true "Repair request"
+// @Success 200 {object} models.Building
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 404 {object} models.ErrorResponse
+// @Router /city/buildings/{id}/repair [patch]
+func (h *BuildingsHandler) Repair(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
 	var req models.RepairRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if req.Amount == 0 {
-		req.Amount = 10
-	}
-	b, err := h.store.RepairBuilding(id, req.Amount)
+
+	building, err := h.service.RepairBuilding(id, req)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	c.JSON(http.StatusOK, b)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(building)
 }
 
-func (h *BuildingsHandler) Delete(c *gin.Context) {
-	id := c.Param("id")
-	if err := h.store.RemoveBuilding(id); err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+// Delete godoc
+// @Summary Delete a building
+// @Description Delete a building by ID
+// @Tags buildings
+// @Param id path string true "Building ID"
+// @Success 204
+// @Failure 404 {object} models.ErrorResponse
+// @Router /city/buildings/{id} [delete]
+func (h *BuildingsHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	if err := h.service.DeleteBuilding(id); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	c.Status(http.StatusNoContent)
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *BuildingsHandler) List(c *gin.Context) {
-	city, err := h.store.GetCity()
+// List godoc
+// @Summary List all buildings
+// @Description Get list of all buildings in the city
+// @Tags buildings
+// @Produce json
+// @Success 200 {array} models.Building
+// @Failure 404 {object} models.ErrorResponse
+// @Router /city/buildings [get]
+func (h *BuildingsHandler) List(w http.ResponseWriter, r *http.Request) {
+	buildings, err := h.service.ListBuildings()
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	c.JSON(http.StatusOK, city.Buildings)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(buildings)
 }
 
-func (h *BuildingsHandler) Effects(c *gin.Context) {
-	// basic static description
-	effects := []gin.H{
-		{"type": models.BuildingFarm, "effect": "+5 food per level per day"},
-		{"type": models.BuildingFactory, "effect": "+7 money, -3 energy per level per day"},
-		{"type": models.BuildingPowerPlant, "effect": "+10 energy per level per day"},
-		{"type": models.BuildingHouse, "effect": "housing/morale, no direct resource"},
-	}
-	c.JSON(http.StatusOK, effects)
+// Effects godoc
+// @Summary Get building effects
+// @Description Get description of effects for each building type
+// @Tags buildings
+// @Produce json
+// @Success 200 {array} models.BuildingEffect
+// @Router /city/buildings/effects [get]
+func (h *BuildingsHandler) Effects(w http.ResponseWriter, r *http.Request) {
+	effects := h.service.GetBuildingEffects()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(effects)
 }

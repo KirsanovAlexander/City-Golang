@@ -1,0 +1,1318 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for managing a city simulation game",
+        "title": "City Management API",
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/city": {
+            "get": {
+                "description": "Get current city state and information",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "city"
+                ],
+                "summary": "Get city information",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.City"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new city with specified name and difficulty",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "city"
+                ],
+                "summary": "Create a new city",
+                "parameters": [
+                    {
+                        "description": "City creation request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateCityRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.City"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/buildings": {
+            "get": {
+                "description": "Get list of all buildings in the city",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "buildings"
+                ],
+                "summary": "List all buildings",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Building"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new building of specified type",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "buildings"
+                ],
+                "summary": "Create a new building",
+                "parameters": [
+                    {
+                        "description": "Building creation request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BuildRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Building"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/buildings/effects": {
+            "get": {
+                "description": "Get description of effects for each building type",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "buildings"
+                ],
+                "summary": "Get building effects",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.BuildingEffect"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/city/buildings/{id}": {
+            "delete": {
+                "description": "Delete a building by ID",
+                "tags": [
+                    "buildings"
+                ],
+                "summary": "Delete a building",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Building ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/buildings/{id}/repair": {
+            "patch": {
+                "description": "Repair a building by ID with specified amount",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "buildings"
+                ],
+                "summary": "Repair a building",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Building ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Repair request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.RepairRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Building"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/buildings/{id}/upgrade": {
+            "patch": {
+                "description": "Upgrade a building by ID to next level",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "buildings"
+                ],
+                "summary": "Upgrade a building",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Building ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Building"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/citizens": {
+            "get": {
+                "description": "Get list of all citizens in the city",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "citizens"
+                ],
+                "summary": "List all citizens",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Citizen"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new citizen with specified name and job",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "citizens"
+                ],
+                "summary": "Create a new citizen",
+                "parameters": [
+                    {
+                        "description": "Citizen creation request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CitizenCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Citizen"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/citizens/jobs": {
+            "get": {
+                "description": "Get statistics of citizens by job type",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "citizens"
+                ],
+                "summary": "Get job statistics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.JobsStatsResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/citizens/mass-add": {
+            "post": {
+                "description": "Add multiple citizens with specified job and prefix",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "citizens"
+                ],
+                "summary": "Mass add citizens",
+                "parameters": [
+                    {
+                        "description": "Mass add request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.MassAddRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Citizen"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/citizens/{id}": {
+            "delete": {
+                "description": "Delete a citizen by ID",
+                "tags": [
+                    "citizens"
+                ],
+                "summary": "Delete a citizen",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Citizen ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/citizens/{id}/happiness": {
+            "patch": {
+                "description": "Adjust a citizen's happiness by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "citizens"
+                ],
+                "summary": "Change citizen happiness",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Citizen ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Happiness change request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ChangeHappinessRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Citizen"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/citizens/{id}/job": {
+            "patch": {
+                "description": "Change a citizen's job by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "citizens"
+                ],
+                "summary": "Change citizen job",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Citizen ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Job change request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ChangeJobRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Citizen"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/events/custom": {
+            "post": {
+                "description": "Trigger a custom event with specified parameters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "simulation"
+                ],
+                "summary": "Trigger custom event",
+                "parameters": [
+                    {
+                        "description": "Custom event request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CustomEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Event"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/events/history": {
+            "get": {
+                "description": "Get history of all events that occurred",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "simulation"
+                ],
+                "summary": "Get events history",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Event"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/city/events/random": {
+            "post": {
+                "description": "Trigger a random event that affects the city",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "simulation"
+                ],
+                "summary": "Trigger random event",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Event"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/resources/adjust": {
+            "patch": {
+                "description": "Manually adjust resource amounts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "resources"
+                ],
+                "summary": "Adjust resources",
+                "parameters": [
+                    {
+                        "description": "Resource adjustment request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AdjustResourcesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Resources"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/resources/history": {
+            "get": {
+                "description": "Get history of resource changes over time",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "resources"
+                ],
+                "summary": "Get resource history",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ResourceSnapshot"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/city/reset": {
+            "delete": {
+                "description": "Reset the city to initial state",
+                "tags": [
+                    "city"
+                ],
+                "summary": "Reset city",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/city/settings": {
+            "patch": {
+                "description": "Update city configuration settings",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "city"
+                ],
+                "summary": "Update city settings",
+                "parameters": [
+                    {
+                        "description": "Settings update request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateSettingsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.CitySettings"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/stats": {
+            "get": {
+                "description": "Get current city statistics and metrics",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "simulation"
+                ],
+                "summary": "Get city statistics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Stats"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/tick": {
+            "post": {
+                "description": "Process one day of simulation (production, consumption, events)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "simulation"
+                ],
+                "summary": "Advance simulation by one day",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.City"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/city/trade": {
+            "post": {
+                "description": "Trade resources (buy/sell) with specified price",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "resources"
+                ],
+                "summary": "Trade resources",
+                "parameters": [
+                    {
+                        "description": "Trade request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.TradeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Resources"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.AdjustResourcesRequest": {
+            "type": "object",
+            "properties": {
+                "energy": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "food": {
+                    "type": "integer",
+                    "example": 150
+                },
+                "money": {
+                    "type": "integer",
+                    "example": 300
+                }
+            }
+        },
+        "models.Building": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "health": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "id": {
+                    "type": "string"
+                },
+                "level": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BuildingEffect": {
+            "type": "object",
+            "properties": {
+                "effect": {
+                    "type": "string",
+                    "example": "+5 food per level per day"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "farm"
+                }
+            }
+        },
+        "models.BuildRequest": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "example": "farm",
+                    "enum": [
+                        "house",
+                        "farm",
+                        "factory",
+                        "powerplant"
+                    ]
+                }
+            }
+        },
+        "models.ChangeHappinessRequest": {
+            "type": "object",
+            "properties": {
+                "delta": {
+                    "type": "number",
+                    "example": 5,
+                    "minimum": -100,
+                    "maximum": 100
+                }
+            }
+        },
+        "models.ChangeJobRequest": {
+            "type": "object",
+            "properties": {
+                "job": {
+                    "type": "string",
+                    "example": "worker",
+                    "enum": [
+                        "unemployed",
+                        "farmer",
+                        "worker",
+                        "engineer"
+                    ]
+                }
+            }
+        },
+        "models.Citizen": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "happiness": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "job": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.CitizenCreateRequest": {
+            "type": "object",
+            "properties": {
+                "job": {
+                    "type": "string",
+                    "example": "farmer",
+                    "enum": [
+                        "unemployed",
+                        "farmer",
+                        "worker",
+                        "engineer"
+                    ]
+                },
+                "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                }
+            }
+        },
+        "models.City": {
+            "type": "object",
+            "properties": {
+                "buildings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Building"
+                    }
+                },
+                "citizens": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Citizen"
+                    }
+                },
+                "day": {
+                    "type": "integer"
+                },
+                "resources": {
+                    "$ref": "#/definitions/models.Resources"
+                },
+                "settings": {
+                    "$ref": "#/definitions/models.CitySettings"
+                }
+            }
+        },
+        "models.CitySettings": {
+            "type": "object",
+            "properties": {
+                "baseFoodUsePerCap": {
+                    "type": "integer"
+                },
+                "difficulty": {
+                    "type": "string"
+                },
+                "energyPerEngineer": {
+                    "type": "integer"
+                },
+                "foodPerFarmer": {
+                    "type": "integer"
+                },
+                "happinessDecay": {
+                    "type": "number"
+                },
+                "moneyPerWorker": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.CreateCityRequest": {
+            "type": "object",
+            "properties": {
+                "difficulty": {
+                    "type": "string",
+                    "example": "normal",
+                    "enum": [
+                        "easy",
+                        "normal",
+                        "hard"
+                    ]
+                },
+                "name": {
+                    "type": "string",
+                    "example": "My City"
+                }
+            }
+        },
+        "models.CustomEventRequest": {
+            "type": "object",
+            "properties": {
+                "delta": {
+                    "$ref": "#/definitions/models.Resources"
+                },
+                "happinessDelta": {
+                    "type": "number",
+                    "example": 5
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Custom festival event"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "festival",
+                    "enum": [
+                        "storm",
+                        "festival",
+                        "population_growth",
+                        "blackout"
+                    ]
+                }
+            }
+        },
+        "models.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "city not found"
+                }
+            }
+        },
+        "models.Event": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "delta": {
+                    "$ref": "#/definitions/models.Resources"
+                },
+                "happinessDelta": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.JobsStatsResponse": {
+            "type": "object",
+            "properties": {
+                "engineer": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "farmer": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "unemployed": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "worker": {
+                    "type": "integer",
+                    "example": 3
+                }
+            }
+        },
+        "models.MassAddRequest": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "example": 5,
+                    "minimum": 1,
+                    "maximum": 100
+                },
+                "job": {
+                    "type": "string",
+                    "example": "farmer",
+                    "enum": [
+                        "unemployed",
+                        "farmer",
+                        "worker",
+                        "engineer"
+                    ]
+                },
+                "prefix": {
+                    "type": "string",
+                    "example": "Citizen"
+                }
+            }
+        },
+        "models.RepairRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer",
+                    "example": 10,
+                    "minimum": 1,
+                    "maximum": 100
+                }
+            }
+        },
+        "models.ResourceSnapshot": {
+            "type": "object",
+            "properties": {
+                "day": {
+                    "type": "integer"
+                },
+                "resources": {
+                    "$ref": "#/definitions/models.Resources"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Resources": {
+            "type": "object",
+            "properties": {
+                "energy": {
+                    "type": "integer"
+                },
+                "food": {
+                    "type": "integer"
+                },
+                "money": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Stats": {
+            "type": "object",
+            "properties": {
+                "avgHappiness": {
+                    "type": "number"
+                },
+                "day": {
+                    "type": "integer"
+                },
+                "energyBalance": {
+                    "type": "integer"
+                },
+                "foodBalance": {
+                    "type": "integer"
+                },
+                "moneyBalance": {
+                    "type": "integer"
+                },
+                "population": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.TradeRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "price": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "resource": {
+                    "type": "string",
+                    "example": "food",
+                    "enum": [
+                        "food",
+                        "energy",
+                        "money"
+                    ]
+                }
+            }
+        },
+        "models.UpdateSettingsRequest": {
+            "type": "object",
+            "properties": {
+                "baseFoodUsePerCap": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "difficulty": {
+                    "type": "string",
+                    "example": "hard",
+                    "enum": [
+                        "easy",
+                        "normal",
+                        "hard"
+                    ]
+                },
+                "energyPerEngineer": {
+                    "type": "integer",
+                    "example": 8
+                },
+                "foodPerFarmer": {
+                    "type": "integer",
+                    "example": 12
+                },
+                "happinessDecay": {
+                    "type": "number",
+                    "example": 0.7
+                },
+                "moneyPerWorker": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "name": {
+                    "type": "string",
+                    "example": "New City Name"
+                }
+            }
+        }
+    }
+}
+

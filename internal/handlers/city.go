@@ -1,60 +1,110 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"city/internal/models"
+	"city/internal/services"
 	"city/internal/storage"
-
-	"github.com/gin-gonic/gin"
 )
 
 type CityHandler struct {
-	store *storage.MemoryStore
+	service *services.CityService
 }
 
-func NewCityHandler(s *storage.MemoryStore) *CityHandler { return &CityHandler{store: s} }
+func NewCityHandler(store storage.Store) *CityHandler {
+	return &CityHandler{
+		service: services.NewCityService(store),
+	}
+}
 
-func (h *CityHandler) Create(c *gin.Context) {
+// Create godoc
+// @Summary Create a new city
+// @Description Create a new city with specified name and difficulty
+// @Tags city
+// @Accept json
+// @Produce json
+// @Param request body models.CreateCityRequest true "City creation request"
+// @Success 201 {object} models.City
+// @Failure 400 {object} models.ErrorResponse
+// @Router /city [post]
+func (h *CityHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req models.CreateCityRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if req.Name == "" {
-		req.Name = "My City"
-	}
-	if req.Difficulty == "" {
-		req.Difficulty = "normal"
-	}
-	city := h.store.CreateCity(req.Name, req.Difficulty)
-	c.JSON(http.StatusCreated, city)
-}
 
-func (h *CityHandler) Get(c *gin.Context) {
-	city, err := h.store.GetCity()
+	city, err := h.service.CreateCity(req)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	c.JSON(http.StatusOK, city)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(city)
 }
 
-func (h *CityHandler) Reset(c *gin.Context) {
-	h.store.Reset()
-	c.Status(http.StatusNoContent)
+// Get godoc
+// @Summary Get city information
+// @Description Get current city state and information
+// @Tags city
+// @Produce json
+// @Success 200 {object} models.City
+// @Failure 404 {object} models.ErrorResponse
+// @Router /city [get]
+func (h *CityHandler) Get(w http.ResponseWriter, r *http.Request) {
+	city, err := h.service.GetCity()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(city)
 }
 
-func (h *CityHandler) UpdateSettings(c *gin.Context) {
+// Reset godoc
+// @Summary Reset city
+// @Description Reset the city to initial state
+// @Tags city
+// @Success 204
+// @Router /city/reset [delete]
+func (h *CityHandler) Reset(w http.ResponseWriter, r *http.Request) {
+	err := h.service.ResetCity()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// UpdateSettings godoc
+// @Summary Update city settings
+// @Description Update city configuration settings
+// @Tags city
+// @Accept json
+// @Produce json
+// @Param request body models.UpdateSettingsRequest true "Settings update request"
+// @Success 200 {object} models.CitySettings
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 404 {object} models.ErrorResponse
+// @Router /city/settings [patch]
+func (h *CityHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	var req models.UpdateSettingsRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := h.store.UpdateSettings(req); err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+
+	settings, err := h.service.UpdateSettings(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	city, _ := h.store.GetCity()
-	c.JSON(http.StatusOK, city.Settings)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(settings)
 }

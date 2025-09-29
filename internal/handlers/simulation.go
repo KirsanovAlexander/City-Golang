@@ -1,61 +1,123 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"city/internal/models"
+	"city/internal/services"
 	"city/internal/storage"
-
-	"github.com/gin-gonic/gin"
 )
 
-type SimulationHandler struct{ store *storage.MemoryStore }
-
-func NewSimulationHandler(s *storage.MemoryStore) *SimulationHandler {
-	return &SimulationHandler{store: s}
+type SimulationHandler struct {
+	service *services.SimulationService
 }
 
-func (h *SimulationHandler) Tick(c *gin.Context) {
-	city, err := h.store.Tick()
+func NewSimulationHandler(store storage.Store) *SimulationHandler {
+	return &SimulationHandler{
+		service: services.NewSimulationService(store),
+	}
+}
+
+// Tick godoc
+// @Summary Advance simulation by one day
+// @Description Process one day of simulation (production, consumption, events)
+// @Tags simulation
+// @Produce json
+// @Success 200 {object} models.City
+// @Failure 404 {object} models.ErrorResponse
+// @Router /city/tick [post]
+func (h *SimulationHandler) Tick(w http.ResponseWriter, r *http.Request) {
+	city, err := h.service.Tick()
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	c.JSON(http.StatusOK, city)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(city)
 }
 
-func (h *SimulationHandler) RandomEvent(c *gin.Context) {
-	ev, err := h.store.RandomEvent()
+// RandomEvent godoc
+// @Summary Trigger random event
+// @Description Trigger a random event that affects the city
+// @Tags simulation
+// @Produce json
+// @Success 200 {object} models.Event
+// @Failure 404 {object} models.ErrorResponse
+// @Router /city/events/random [post]
+func (h *SimulationHandler) RandomEvent(w http.ResponseWriter, r *http.Request) {
+	event, err := h.service.RandomEvent()
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	c.JSON(http.StatusOK, ev)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(event)
 }
 
-func (h *SimulationHandler) CustomEvent(c *gin.Context) {
+// CustomEvent godoc
+// @Summary Trigger custom event
+// @Description Trigger a custom event with specified parameters
+// @Tags simulation
+// @Accept json
+// @Produce json
+// @Param request body models.CustomEventRequest true "Custom event request"
+// @Success 200 {object} models.Event
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 404 {object} models.ErrorResponse
+// @Router /city/events/custom [post]
+func (h *SimulationHandler) CustomEvent(w http.ResponseWriter, r *http.Request) {
 	var req models.CustomEventRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	ev, err := h.store.CustomEvent(req)
+
+	event, err := h.service.CustomEvent(req)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	c.JSON(http.StatusOK, ev)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(event)
 }
 
-func (h *SimulationHandler) EventsHistory(c *gin.Context) {
-	c.JSON(http.StatusOK, h.store.EventsHistory())
-}
-
-func (h *SimulationHandler) Stats(c *gin.Context) {
-	st, err := h.store.Stats()
+// EventsHistory godoc
+// @Summary Get events history
+// @Description Get history of all events that occurred
+// @Tags simulation
+// @Produce json
+// @Success 200 {array} models.Event
+// @Router /city/events/history [get]
+func (h *SimulationHandler) EventsHistory(w http.ResponseWriter, r *http.Request) {
+	events, err := h.service.GetEventsHistory()
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	c.JSON(http.StatusOK, st)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(events)
+}
+
+// Stats godoc
+// @Summary Get city statistics
+// @Description Get current city statistics and metrics
+// @Tags simulation
+// @Produce json
+// @Success 200 {object} models.Stats
+// @Failure 404 {object} models.ErrorResponse
+// @Router /city/stats [get]
+func (h *SimulationHandler) Stats(w http.ResponseWriter, r *http.Request) {
+	stats, err := h.service.GetStats()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(stats)
 }
